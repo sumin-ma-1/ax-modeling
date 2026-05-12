@@ -1,0 +1,5 @@
+﻿lead_time,best_model,accuracy,precision,recall,f1,roc_auc,pr_auc,balanced_accuracy,threshold,feature_policy
+T+1,XGBoost,0.9333,0.9616,0.8163,0.883,0.9853,0.9704,0.9009,0.09,exclude_total_cyano_and_harmful_cyano_features
+T+3,XGBoost,0.9313,0.9503,0.8207,0.8808,0.9861,0.9712,0.9008,0.07,exclude_total_cyano_and_harmful_cyano_features
+T+7,XGBoost,0.9065,0.9739,0.7185,0.8269,0.988,0.9719,0.8549,0.35,exclude_total_cyano_and_harmful_cyano_features
+T+10,XGBoost,0.932,0.9664,0.8104,0.8815,0.9909,0.9805,0.8988,0.26,exclude_total_cyano_and_harmful_cyano_features

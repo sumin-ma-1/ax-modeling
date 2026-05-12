@@ -1,0 +1,53 @@
+﻿hypothesis_id,lead_time,variable,comparison_group,test_method,statistic,p_value,effect_size_median_diff,alert_median,non_alert_median,direction,significant_0_05
+H4_lead_signal,T+1,CHD,future_alert_1_vs_0,Mann-Whitney U,12738190.0,0.0,0.0,0.0,0.0,alert lower,True
+H4_lead_signal,T+1,water_temp_mean_7d,future_alert_1_vs_0,Mann-Whitney U,17840557.0,0.0,11.83571428571429,24.021428571428576,12.185714285714285,alert higher,True
+H4_lead_signal,T+1,수온(℃),future_alert_1_vs_0,Mann-Whitney U,17675869.0,0.0,11.7,23.9,12.2,alert higher,True
+H4_lead_signal,T+1,Chl-a (㎎/㎥),future_alert_1_vs_0,Mann-Whitney U,16319559.5,0.0,5.785714285714285,10.77142857142857,4.985714285714286,alert higher,True
+H4_lead_signal,T+1,log_cyano,future_alert_1_vs_0,Mann-Whitney U,18674886.0,0.0,8.484861870819898,8.485206459085134,0.00034458826523578,alert higher,True
+H4_lead_signal,T+1,log_cyano_lag7,future_alert_1_vs_0,Mann-Whitney U,18151103.5,0.0,8.479973286840709,8.480681407800176,0.0007081209594671639,alert higher,True
+H4_lead_signal,T+1,log_cyano_roll7,future_alert_1_vs_0,Mann-Whitney U,18679532.0,0.0,8.341656839251273,8.4655491641846,0.12389232493332683,alert higher,True
+H4_lead_signal,T+1,hoenam_log_cyano_lag7,future_alert_1_vs_0,Mann-Whitney U,17688860.5,0.0,8.183767454928002,8.291642910078162,0.10787545515015992,alert higher,True
+H4_lead_signal,T+1,HRT_7d,future_alert_1_vs_0,Mann-Whitney U,6034414.0,1.6125063882861975e-166,-233.53868402488507,266.9837458453399,500.522429870225,alert lower,True
+H4_lead_signal,T+1,rain_sum_7d,future_alert_1_vs_0,Mann-Whitney U,12272953.0,7.666768259858469e-84,11.796099999999969,17.36859999999997,5.5725,alert higher,True
+H4_lead_signal,T+1,저수율(%),future_alert_1_vs_0,Mann-Whitney U,12113555.5,6.471232267467203e-74,5.049999999999997,67.6,62.55,alert higher,True
+H4_lead_signal,T+1,solar_mean_7d,future_alert_1_vs_0,Mann-Whitney U,10773277.0,4.895898712802067e-16,0.71142857142857,14.964285714285714,14.252857142857144,alert higher,True
+H4_lead_signal,T+1,rain_pulse_flag,future_alert_1_vs_0,Mann-Whitney U,9642659.5,0.10132243606867145,0.0,0.0,0.0,alert lower,False
+H4_lead_signal,T+10,CHD,future_alert_1_vs_0,Mann-Whitney U,13114810.0,0.0,0.0,0.0,0.0,alert lower,True
+H4_lead_signal,T+10,water_temp_mean_7d,future_alert_1_vs_0,Mann-Whitney U,18062332.5,0.0,12.171488095238093,24.368979591836734,12.19749149659864,alert higher,True
+H4_lead_signal,T+10,수온(℃),future_alert_1_vs_0,Mann-Whitney U,17980490.0,0.0,12.05714285714286,24.25714285714286,12.2,alert higher,True
+H4_lead_signal,T+10,Chl-a (㎎/㎥),future_alert_1_vs_0,Mann-Whitney U,15683336.5,0.0,5.2285714285714295,10.257142857142858,5.0285714285714285,alert higher,True
+H4_lead_signal,T+10,log_cyano,future_alert_1_vs_0,Mann-Whitney U,17974873.5,0.0,8.475681569099763,8.476836020365605,0.0011544512658414974,alert higher,True
+H4_lead_signal,T+10,log_cyano_lag7,future_alert_1_vs_0,Mann-Whitney U,17259806.5,0.0,8.431035888804136,8.432724035007416,0.001688146203280806,alert higher,True
+H4_lead_signal,T+10,log_cyano_roll7,future_alert_1_vs_0,Mann-Whitney U,17864272.0,0.0,8.254445445928393,8.43835742420484,0.1839119782764463,alert higher,True
+H4_lead_signal,T+10,hoenam_log_cyano_lag7,future_alert_1_vs_0,Mann-Whitney U,17125744.0,0.0,8.119353716799836,8.295298859752148,0.17594514295231092,alert higher,True
+H4_lead_signal,T+10,HRT_7d,future_alert_1_vs_0,Mann-Whitney U,5315299.0,1.3909890523471333e-235,-282.4651053965416,226.89651130421294,509.36161670075455,alert lower,True
+H4_lead_signal,T+10,rain_sum_7d,future_alert_1_vs_0,Mann-Whitney U,12760129.0,1.2247367962595138e-120,13.771500000000014,19.1891,5.417599999999985,alert higher,True
+H4_lead_signal,T+10,solar_mean_7d,future_alert_1_vs_0,Mann-Whitney U,11305016.5,3.793598353915205e-35,1.752142857142859,15.832857142857145,14.080714285714286,alert higher,True
+H4_lead_signal,T+10,저수율(%),future_alert_1_vs_0,Mann-Whitney U,11141215.0,8.41988096690352e-29,3.3999999999999986,66.3,62.9,alert higher,True
+H4_lead_signal,T+10,rain_pulse_flag,future_alert_1_vs_0,Mann-Whitney U,9601342.0,0.044821791152637,0.0,0.0,0.0,alert lower,True
+H4_lead_signal,T+3,CHD,future_alert_1_vs_0,Mann-Whitney U,12840287.0,0.0,0.0,0.0,0.0,alert lower,True
+H4_lead_signal,T+3,water_temp_mean_7d,future_alert_1_vs_0,Mann-Whitney U,17910885.5,0.0,11.942857142857145,24.12857142857143,12.185714285714285,alert higher,True
+H4_lead_signal,T+3,수온(℃),future_alert_1_vs_0,Mann-Whitney U,17758433.0,0.0,11.775000000000002,23.975,12.2,alert higher,True
+H4_lead_signal,T+3,Chl-a (㎎/㎥),future_alert_1_vs_0,Mann-Whitney U,16200998.5,0.0,5.725,10.725,5.0,alert higher,True
+H4_lead_signal,T+3,log_cyano,future_alert_1_vs_0,Mann-Whitney U,18559787.0,0.0,8.485447601401628,8.485793478846258,0.0003458774446295626,alert higher,True
+H4_lead_signal,T+3,log_cyano_lag7,future_alert_1_vs_0,Mann-Whitney U,17974873.5,0.0,8.475681569099763,8.476836020365605,0.0011544512658414974,alert higher,True
+H4_lead_signal,T+3,log_cyano_roll7,future_alert_1_vs_0,Mann-Whitney U,18514149.0,0.0,8.328400069711538,8.464830365158914,0.13643029544737592,alert higher,True
+H4_lead_signal,T+3,hoenam_log_cyano_lag7,future_alert_1_vs_0,Mann-Whitney U,17580583.0,0.0,8.186834068501884,8.300345390072462,0.113511321570577,alert higher,True
+H4_lead_signal,T+3,HRT_7d,future_alert_1_vs_0,Mann-Whitney U,5902630.0,3.551477849207519e-178,-238.32402657032168,263.5229658216582,501.8469923919799,alert lower,True
+H4_lead_signal,T+3,rain_sum_7d,future_alert_1_vs_0,Mann-Whitney U,12391570.0,4.175654013049554e-92,12.448,17.973599999999987,5.525599999999986,alert higher,True
+H4_lead_signal,T+3,저수율(%),future_alert_1_vs_0,Mann-Whitney U,11884984.0,2.2353558191098207e-61,4.899999999999999,67.5,62.6,alert higher,True
+H4_lead_signal,T+3,solar_mean_7d,future_alert_1_vs_0,Mann-Whitney U,10899580.0,7.58181099704986e-20,0.9864285714285703,15.202142857142857,14.215714285714286,alert higher,True
+H4_lead_signal,T+3,rain_pulse_flag,future_alert_1_vs_0,Mann-Whitney U,9641381.5,0.14256204550309953,0.0,0.0,0.0,alert lower,False
+H4_lead_signal,T+7,CHD,future_alert_1_vs_0,Mann-Whitney U,13026477.5,0.0,0.0,0.0,0.0,alert lower,True
+H4_lead_signal,T+7,water_temp_mean_7d,future_alert_1_vs_0,Mann-Whitney U,18006607.5,0.0,12.085714285714285,24.271428571428572,12.185714285714287,alert higher,True
+H4_lead_signal,T+7,수온(℃),future_alert_1_vs_0,Mann-Whitney U,17897415.0,0.0,11.957142857142859,24.15714285714286,12.2,alert higher,True
+H4_lead_signal,T+7,Chl-a (㎎/㎥),future_alert_1_vs_0,Mann-Whitney U,15896773.0,0.0,5.485714285714286,10.5,5.014285714285714,alert higher,True
+H4_lead_signal,T+7,log_cyano,future_alert_1_vs_0,Mann-Whitney U,18237421.0,0.0,8.480435310650332,8.480978046866833,0.0005427362165009682,alert higher,True
+H4_lead_signal,T+7,log_cyano_lag7,future_alert_1_vs_0,Mann-Whitney U,17578168.0,0.0,8.466019030798618,8.467523969786301,0.001504938987682207,alert higher,True
+H4_lead_signal,T+7,log_cyano_roll7,future_alert_1_vs_0,Mann-Whitney U,18149106.0,0.0,8.289351217025276,8.460363051332777,0.17101183430750147,alert higher,True
+H4_lead_signal,T+7,hoenam_log_cyano_lag7,future_alert_1_vs_0,Mann-Whitney U,17332772.5,0.0,8.140865426117898,8.312199476543162,0.1713340504252637,alert higher,True
+H4_lead_signal,T+7,HRT_7d,future_alert_1_vs_0,Mann-Whitney U,5595208.0,4.07038251310999e-207,-266.5281594582825,238.79261896867578,505.32077842695827,alert lower,True
+H4_lead_signal,T+7,rain_sum_7d,future_alert_1_vs_0,Mann-Whitney U,12582859.0,1.5940883976376049e-106,13.036600000000012,18.4748,5.438199999999986,alert higher,True
+H4_lead_signal,T+7,저수율(%),future_alert_1_vs_0,Mann-Whitney U,11430865.0,5.802938707485086e-40,4.1200000000000045,66.9,62.78,alert higher,True
+H4_lead_signal,T+7,solar_mean_7d,future_alert_1_vs_0,Mann-Whitney U,11127001.0,7.178948490483424e-28,1.3792857142857127,15.522857142857143,14.14357142857143,alert higher,True
+H4_lead_signal,T+7,rain_pulse_flag,future_alert_1_vs_0,Mann-Whitney U,9627869.5,0.14056152875107247,0.0,0.0,0.0,alert lower,False
