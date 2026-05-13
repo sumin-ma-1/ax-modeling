@@ -786,109 +786,285 @@ with tab_action:
         st.warning(f"{action_lead} 기준 대응 필요 지점: {', '.join(high_rows['채수위치'].tolist())}")
 
 with tab_performance:
-    st.subheader("리드타임별 모델 성능")
-    perf_lead = st.selectbox("성능 확인 리드타임", LEAD_TIMES, key="lead_performance")
-
-    metric_cols = [
-        "lead_time",
-        "best_model",
-        "accuracy",
-        "precision",
-        "recall",
-        "f1",
-        "roc_auc",
-        "pr_auc",
-        "balanced_accuracy",
-        "threshold",
-    ]
-    best_lead = best_summary[best_summary["lead_time"] == perf_lead][metric_cols].copy()
-    if not best_lead.empty:
-        row = best_lead.iloc[0]
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Best Model", row["best_model"])
-        c2.metric("Accuracy", f"{row['accuracy']:.3f}")
-        c3.metric("F1", f"{row['f1']:.3f}")
-        c4.metric("PR-AUC", f"{row['pr_auc']:.3f}")
-
-        c5, c6, c7, c8 = st.columns(4)
-        c5.metric("Precision", f"{row['precision']:.3f}")
-        c6.metric("Recall", f"{row['recall']:.3f}")
-        c7.metric("Balanced Acc.", f"{row['balanced_accuracy']:.3f}")
-        c8.metric("Threshold", f"{row['threshold']:.2f}")
-
-        st.dataframe(best_lead, use_container_width=True, hide_index=True)
-
-    st.subheader(f"{perf_lead} 전체 모델 비교")
-    test_results = model_results[
-        (model_results["dataset"] == "test") & (model_results["lead_time"] == perf_lead)
-    ].copy()
-    st.dataframe(
-        test_results[
-            [
-                "model_name",
-                "accuracy",
-                "precision",
-                "recall",
-                "f1",
-                "roc_auc",
-                "pr_auc",
-                "balanced_accuracy",
-                "threshold",
-            ]
-        ].sort_values("pr_auc", ascending=False),
-        use_container_width=True,
-        hide_index=True,
+    perf_tab1, perf_tab2, perf_tab3 = st.tabs(
+        ["① 분석 프로세스", "② 신뢰도 검증", "③ 방법론 타당성"]
     )
 
-    st.subheader(f"{perf_lead} 진단 그래프")
-    col_left, col_right = st.columns([0.42, 0.58], gap="large")
-    with col_left:
-        cm_img = fig_dir / f"confusion_matrix_Tplus{LEAD_DAYS[perf_lead]}_best.png"
-        render_image_card(
-            cm_img,
-            f"{perf_lead} Confusion Matrix",
-            "실제 발령/미발령과 모델 예측 결과의 교차표입니다.",
-            max_height=330,
+    # ── 1. 분석 프로세스 ──────────────────────────────────────────────
+    with perf_tab1:
+        st.subheader("1. 분석 프로세스")
+
+        col_proc1, col_proc2 = st.columns(2, gap="large")
+        with col_proc1:
+            st.markdown("**① 데이터 전처리 및 피처 엔지니어링**")
+            st.markdown(
+                """
+- 수질·기상·수문 원시 관측값 → 지점별(채수위치) 그룹 단위 시계열 피처 생성
+- **Lag 피처**: 수온·강우량·Chl-a 등 1/3/7/14/30일 시차 반영 — 과거 상태의 예측력 보존
+- **Rolling 피처**: 3/7/14일 이동평균·이동합 — 단기 추세 포착
+- **복합 지표**: CHD(연속고온일수), HRT(수리학적 체류시간), BGI(남조류 성장 잠재지수), flow_balance
+- **주기성 인코딩**: 월·일(day-of-year)을 sin/cos 변환 — 계절성 비선형 표현
+- **타겟**: 발령단계 이진화(미발령=0 / 경보 이상=1), T+1·3·7·10일 선행 레이블 생성
+"""
+            )
+        with col_proc2:
+            st.markdown("**② 모델링 파이프라인**")
+            st.markdown(
+                """
+- **시간 순서 기반 분할**: 훈련→검증→테스트를 날짜 순서로 분할 — 데이터 누수 방지
+- **클래스 불균형 처리**: `scale_pos_weight`(XGBoost), `class_weight='balanced'`(RF) 적용
+- **임계값 최적화**: Precision-Recall 곡선 기반으로 F1·Recall 균형 임계값 자동 탐색
+- **교차 검증**: TimeSeriesSplit 5-fold — 시계열 순서 준수
+- **비교 모델**: RandomForest · XGBoost · LightGBM 3종 동일 피처셋으로 비교
+- **최적 모델 선정**: PR-AUC 기준 — 불균형 이진 분류에서 정보량 가장 높은 지표
+"""
+            )
+
+        st.divider()
+        st.markdown("**③ 인과추론 기법 적용: Mann-Whitney U 검정**")
+        st.markdown(
+            """
+- 경보 발령 구간(alert=1)과 미발령 구간(alert=0)의 변수 분포 차이를 비모수 검정으로 확인
+- **귀무가설**: 두 그룹의 분포가 동일하다 → p < 0.05이면 기각 (통계적으로 유의미한 차이)
+- 효과 크기(중앙값 차이)로 변수별 실질적 영향 방향과 크기 파악 — SHAP 결과와 교차 검증
+"""
         )
 
-    with col_right:
-        perf_shap = shap_top_features[shap_top_features["lead_time"] == perf_lead].head(12)
-        with st.container(border=True):
-            st.markdown(f"<div class='viz-card-title'>{perf_lead} SHAP Top Feature</div>", unsafe_allow_html=True)
-            if perf_shap.empty:
-                st.info("해당 리드타임의 SHAP 결과가 없습니다.")
-            else:
-                fig = px.bar(
-                    perf_shap.sort_values("mean_abs_shap"),
-                    x="mean_abs_shap",
-                    y="feature",
-                    orientation="h",
-                    color="mean_abs_shap",
-                    color_continuous_scale="Blues",
-                    labels={"mean_abs_shap": "평균 |SHAP|", "feature": "변수"},
-                )
-                fig.update_layout(
-                    height=360,
-                    margin=dict(l=10, r=10, t=10, b=10),
-                    coloraxis_showscale=False,
-                    yaxis_title=None,
-                    xaxis_title="평균 |SHAP|",
-                )
-                st.plotly_chart(fig, use_container_width=True)
+        pval_path = table_dir / "test_results_pvalue_env_with_chla.csv"
+        if pval_path.exists():
+            pval_df = _read_csv_any(pval_path)
+            lead_for_pval = st.selectbox("리드타임 선택 (인과검정)", LEAD_TIMES, key="lead_pval")
+            sig_df = pval_df[pval_df["lead_time"] == lead_for_pval].copy()
+            sig_df["유의여부"] = sig_df["significant_0_05"].map({True: "✅ 유의", False: "—"})
+            sig_df["p값"] = sig_df["p_value"].apply(lambda v: f"{v:.2e}")
+            sig_df["효과 방향"] = sig_df["direction"].map(
+                {"alert higher": "↑ 발령 시 높음", "alert lower": "↓ 발령 시 낮음"}
+            ).fillna(sig_df["direction"])
+            display_pval = (
+                sig_df[[
+                    "variable", "test_method", "p값",
+                    "effect_size_median_diff", "alert_median", "non_alert_median",
+                    "효과 방향", "유의여부",
+                ]]
+                .rename(columns={
+                    "variable": "변수", "test_method": "검정방법",
+                    "effect_size_median_diff": "중앙값 차이",
+                    "alert_median": "발령 중앙값", "non_alert_median": "미발령 중앙값",
+                })
+                .sort_values("p값")
+            )
+            st.dataframe(display_pval, use_container_width=True, hide_index=True)
+        else:
+            st.info("인과검정 결과 파일(test_results_pvalue_env_with_chla.csv)이 없습니다.")
 
-    shap_img = fig_dir / f"shap_summary_Tplus{LEAD_DAYS[perf_lead]}.png"
-    render_image_card(
-        shap_img,
-        f"{perf_lead} SHAP Summary",
-        "점의 색은 변수값 크기, x축 위치는 예측 위험을 높이거나 낮춘 방향과 크기를 의미합니다.",
-        max_height=620,
-    )
+    # ── 2. 신뢰도 검증 ───────────────────────────────────────────────
+    with perf_tab2:
+        st.subheader("2. 신뢰도 검증")
 
-    with st.expander("전체 리드타임 ROC/PR Curve 보기"):
-        curve_img = fig_dir / "roc_pr_curve_best_models.png"
-        render_image_card(
-            curve_img,
-            "ROC/PR Curve - Best Models",
-            "전체 리드타임 best model의 ROC와 Precision-Recall 곡선입니다.",
-            max_height=560,
+        # 2-1: 3-model comparison table
+        st.markdown("#### 2-1. 리드타임별 3개 모델 성능 비교")
+        st.caption("테스트셋 기준 · PR-AUC 내림차순 정렬 · 녹색 강조 = 해당 지표 최고값")
+
+        perf_lead = st.selectbox("리드타임 선택", LEAD_TIMES, key="lead_performance")
+
+        main_exp = "env_with_chla" if "experiment" in model_results.columns else None
+        if main_exp and main_exp in model_results["experiment"].values:
+            test_results = model_results[
+                (model_results["experiment"] == main_exp)
+                & (model_results["dataset"] == "test")
+                & (model_results["lead_time"] == perf_lead)
+            ].copy()
+        else:
+            test_results = model_results[
+                (model_results["dataset"] == "test") & (model_results["lead_time"] == perf_lead)
+            ].copy()
+
+        show_cols = ["model_name", "accuracy", "precision", "recall", "f1",
+                     "roc_auc", "pr_auc", "balanced_accuracy", "threshold"]
+        col_labels = {
+            "model_name": "모델", "accuracy": "Accuracy", "precision": "Precision",
+            "recall": "Recall", "f1": "F1", "roc_auc": "ROC-AUC",
+            "pr_auc": "PR-AUC", "balanced_accuracy": "Balanced Acc.", "threshold": "Threshold",
+        }
+        numeric_cols = ["Accuracy", "Precision", "Recall", "F1", "ROC-AUC", "PR-AUC", "Balanced Acc."]
+        fmt = {k: "{:.3f}" for k in numeric_cols}
+        fmt["Threshold"] = "{:.2f}"
+
+        tbl = (
+            test_results[show_cols]
+            .sort_values("pr_auc", ascending=False)
+            .rename(columns=col_labels)
+            .reset_index(drop=True)
         )
+        st.dataframe(
+            tbl.style
+            .format(fmt)
+            .highlight_max(subset=numeric_cols, color="#d4f0c0"),
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        # Best model metrics bar
+        best_lead_row = best_summary[best_summary["lead_time"] == perf_lead]
+        if not best_lead_row.empty:
+            row = best_lead_row.iloc[0]
+            st.markdown(f"**Best Model ({perf_lead}): {row['best_model']}**")
+            c1, c2, c3, c4, c5, c6 = st.columns(6)
+            c1.metric("ROC-AUC", f"{row['roc_auc']:.3f}")
+            c2.metric("PR-AUC", f"{row['pr_auc']:.3f}")
+            c3.metric("F1", f"{row['f1']:.3f}")
+            c4.metric("Recall", f"{row['recall']:.3f}")
+            c5.metric("Precision", f"{row['precision']:.3f}")
+            c6.metric("Balanced Acc.", f"{row['balanced_accuracy']:.3f}")
+
+        st.divider()
+
+        col_cm, col_roc = st.columns(2, gap="large")
+        with col_cm:
+            cm_img = fig_dir / f"confusion_matrix_Tplus{LEAD_DAYS[perf_lead]}_best.png"
+            render_image_card(
+                cm_img,
+                f"{perf_lead} Confusion Matrix (Best Model)",
+                "행: 실제 클래스 / 열: 예측 클래스. 우상단=미발령 오탐(FP), 좌하단=발령 미탐(FN).",
+                max_height=360,
+            )
+        with col_roc:
+            curve_img = fig_dir / "roc_pr_curve_best_models.png"
+            render_image_card(
+                curve_img,
+                "ROC / PR Curve — Best Models (전체 리드타임)",
+                "ROC-AUC ≥ 0.985, PR-AUC ≥ 0.970 — 전 리드타임에서 높은 변별력 확인.",
+                max_height=360,
+            )
+
+        st.divider()
+
+        # 2-2: SHAP for best overall model
+        best_overall_row = best_summary.loc[best_summary["pr_auc"].idxmax()]
+        best_lead_label = best_overall_row["lead_time"]
+        best_model_name = best_overall_row["best_model"]
+
+        st.markdown(f"#### 2-2. 최고 성능 모델 SHAP 해석 ({best_lead_label} · {best_model_name})")
+        st.markdown(
+            f"""
+- **PR-AUC {best_overall_row['pr_auc']:.3f} / ROC-AUC {best_overall_row['roc_auc']:.3f}** — 전체 리드타임 중 최고 성능 모델
+- **SHAP(SHapley Additive exPlanations)**: 각 변수가 개별 예측에 기여한 값을 게임이론(Shapley value) 기반으로 분해
+- **막대 차트(좌)**: 변수별 평균 |SHAP| — 값이 클수록 예측에 미치는 영향 큼
+- **Beeswarm Plot(우)**: 점 색=변수값 크기(빨강↑/파랑↓), x축=예측 위험 방향·크기(양수=위험 증가)
+- 계절성 인코딩(doy_sin), 수온, Chl-a, pH 순으로 경보 예측에 주요 기여
+"""
+        )
+
+        col_shap_bar, col_shap_img = st.columns([0.42, 0.58], gap="large")
+        with col_shap_bar:
+            best_shap_df = shap_top_features[shap_top_features["lead_time"] == best_lead_label].head(15)
+            if not best_shap_df.empty:
+                with st.container(border=True):
+                    st.markdown(
+                        "<div class='viz-card-title'>SHAP Top Feature Importance</div>",
+                        unsafe_allow_html=True,
+                    )
+                    fig_shap_bar = px.bar(
+                        best_shap_df.sort_values("mean_abs_shap"),
+                        x="mean_abs_shap",
+                        y="feature",
+                        orientation="h",
+                        color="mean_abs_shap",
+                        color_continuous_scale="Blues",
+                        labels={"mean_abs_shap": "평균 |SHAP|", "feature": "변수"},
+                    )
+                    fig_shap_bar.update_layout(
+                        height=480,
+                        margin=dict(l=10, r=10, t=10, b=10),
+                        coloraxis_showscale=False,
+                        yaxis_title=None,
+                        xaxis_title="평균 |SHAP|",
+                    )
+                    st.plotly_chart(fig_shap_bar, use_container_width=True)
+        with col_shap_img:
+            best_shap_img = fig_dir / f"shap_summary_Tplus{LEAD_DAYS[best_lead_label]}.png"
+            render_image_card(
+                best_shap_img,
+                f"SHAP Beeswarm Plot ({best_lead_label})",
+                "각 점=1개 샘플. 점의 색은 변수값 크기, x축 위치는 예측 위험을 높이거나 낮춘 방향과 크기.",
+                max_height=500,
+            )
+
+    # ── 3. 방법론 타당성 ─────────────────────────────────────────────
+    with perf_tab3:
+        st.subheader("3. 방법론 타당성")
+
+        col_m1, col_m2 = st.columns(2, gap="large")
+        with col_m1:
+            st.markdown("**알고리즘 선정 이유 — 앙상블 트리 기반 모델**")
+            st.markdown(
+                """
+- **비정규·비선형 데이터**: 수질·기상·수문 데이터는 정규분포를 따르지 않고 변수 간 상호작용이 복잡 → 선형 모델의 한계
+- **결측·이상치 강건성**: 트리 기반 모델은 결측치 처리와 이상치에 상대적으로 강함
+- **피처 중요도 해석**: 트리 기반 + SHAP로 변수 기여도 직관적 설명 → 비전문가 대상 보고 적합
+- **클래스 불균형 대응**: 내장 파라미터(scale_pos_weight, class_weight)로 경보 발령 희소 클래스 학습 가능
+"""
+            )
+
+            st.markdown("**RandomForest (기저 비교 모델)**")
+            st.markdown(
+                """
+- 다수의 독립 결정트리 → 분산 감소, 과적합 억제에 강점
+- 피처 랜덤 샘플링으로 변수 간 상관 효과 완화
+"""
+            )
+            st.markdown("**XGBoost (최종 채택 모델)**")
+            st.markdown(
+                """
+- 잔차 기반 순차 학습 → 오분류 샘플에 집중하여 반복 개선
+- L1/L2 정규화 내장 → 과적합 방지
+- `scale_pos_weight`로 경보 발령 소수 클래스 학습 효율 극대화
+- **전 리드타임에서 RF·LightGBM 대비 F1·PR-AUC 최고** → 최종 채택
+"""
+            )
+            st.markdown("**LightGBM (비교 모델)**")
+            st.markdown(
+                """
+- Leaf-wise 분할로 속도 우위, 대규모 데이터에 강점
+- 본 분석 데이터 규모에서는 XGBoost 대비 F1 소폭 열세
+"""
+            )
+
+        with col_m2:
+            st.markdown("**평가 지표 선정 이유**")
+            st.markdown(
+                """
+- **PR-AUC (1차 기준)**: 경보 발령 클래스가 희소 → ROC-AUC보다 불균형 민감성 높음. 모델 선정 기준
+- **Recall 중시**: 미탐지(발령 놓침)의 피해가 오탐보다 크므로 Recall ≥ 0.80 우선 확보
+- **임계값 최적화**: 단순 0.5 대신 PR 곡선 기반 F1·Recall 균형점 탐색 → 실운영 적용 임계값
+"""
+            )
+
+            st.markdown("**인과추론 — Mann-Whitney U 검정 채택 이유**")
+            st.markdown(
+                """
+- 수질 데이터는 비정규분포이며 소표본 구간이 존재 → 모수적 t-검정 부적합
+- 비모수 검정으로 분포 형태 가정 없이 두 그룹(발령/미발령) 간 분포 차이 검정
+- 효과 크기(중앙값 차이)로 변수별 실질적 영향력 정량화 → SHAP와 교차 검증으로 신뢰도 강화
+"""
+            )
+
+            st.markdown("**SHAP 채택 이유**")
+            st.markdown(
+                """
+- 블랙박스 모델(XGBoost)의 예측을 개별 샘플 수준에서 설명
+- 게임이론(Shapley value) 기반 → 변수 기여 공정 배분, 상호작용 효과 반영
+- 규제·의사결정 보고서에서 **설명 가능한 AI(XAI)** 요건 충족
+"""
+            )
+
+            st.markdown("**선행 예측(Lead Time) 설계 이유**")
+            st.markdown(
+                """
+- **T+1(1일)**: 단기 현장 조치·약품 투입 지시
+- **T+3(3일)**: 수문 운영·수질 모니터링 강화 계획
+- **T+7(7일)**: 주간 단위 선제 대응·댐 방류 조정
+- **T+10(10일)**: 중기 수자원 운영 계획 연계
+- **전 리드타임 ROC-AUC > 0.985** → 단기~중기 예측의 실용적 신뢰도 확보
+"""
+            )
