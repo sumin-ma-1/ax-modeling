@@ -20,6 +20,61 @@
 - SHAP 기반 주요 위험 요인 해석
 - 리드타임별 대응 시나리오 제공
 
+## 시스템 아키텍처
+
+```mermaid
+flowchart LR
+    A[원천 데이터<br/>기상·수질·수문·댐운영] --> B[전처리 및 통합<br/>final_data.csv]
+    B --> C[운영 누적 데이터셋<br/>operational_data.csv]
+    C --> D[피처 엔지니어링<br/>CHD·rain_sum·HRT·lag·rolling]
+    D --> E1[환경·수문 기반<br/>사전예측 모델]
+    D --> E2[조류 모니터링 포함<br/>보조 모델]
+    E1 --> F[리드타임별 예측<br/>T+1·T+3·T+7·T+10]
+    E2 --> F
+    F --> G[SHAP 해석<br/>주요 위험 요인]
+    F --> H[대응 시나리오<br/>모니터링·설비·정수장 대응]
+    G --> I[Streamlit 대시보드]
+    H --> I
+```
+
+## 모델 사용 흐름
+
+```mermaid
+flowchart TB
+    A[예측 시점 데이터] --> B{조류 세포수<br/>측정값 확보 여부}
+
+    B -- 미확보 --> C[환경·수문 기반 사전예측 모델]
+    C --> C1[입력<br/>기상·수질·수문·댐운영]
+    C --> C2[용도<br/>사전 위험 예측]
+
+    B -- 확보 --> D[조류 모니터링 포함 보조 모델]
+    D --> D1[입력<br/>환경 변수 + log_cyano·cyano lag/rolling]
+    D --> D2[용도<br/>단기 위험 재판단]
+
+    C2 --> E[운영 위험도 산출]
+    D2 --> E
+    E --> F[대응 시나리오]
+```
+
+## 모델링 파이프라인
+
+```mermaid
+flowchart TD
+    A[final_data.csv] --> B[타깃 생성<br/>y_Tplus1·3·7·10]
+    B --> C[피처 정책 설정<br/>조류 세포수 포함/제외]
+    C --> D[Train<br/>2016~2022]
+    C --> E[Validation<br/>2023]
+    C --> F[Test<br/>2024~2025]
+    D --> G[RF·XGBoost·LightGBM 학습]
+    E --> H[Threshold 튜닝<br/>Recall-F1 균형]
+    F --> I[최종 성능 평가<br/>Accuracy·F1·PR-AUC]
+    G --> J[Best Model 선정]
+    H --> J
+    I --> J
+    J --> K[SHAP 분석]
+    K --> L[대시보드 및 대응 시나리오]
+```
+
 ## 파일 구조
 
 ```text
