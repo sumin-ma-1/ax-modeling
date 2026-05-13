@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import io
 import json
 from pathlib import Path
@@ -67,6 +68,26 @@ st.markdown(
     .risk-card .grade {font-size: 1.75rem; font-weight: 800; margin-top: 8px;}
     .risk-card .prob {font-size: 1.05rem; margin-top: 6px;}
     .small-caption {color: #666; font-size: 0.88rem;}
+    .viz-card {
+        border: 1px solid rgba(49, 51, 63, 0.16);
+        border-radius: 14px;
+        padding: 16px;
+        background: #ffffff;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        margin-bottom: 16px;
+    }
+    .viz-card-title {
+        font-weight: 700;
+        font-size: 1.05rem;
+        margin-bottom: 10px;
+        color: #20222A;
+    }
+    .viz-card img {
+        display: block;
+        width: 100%;
+        object-fit: contain;
+        margin: 0 auto;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -359,6 +380,24 @@ def explain_lead(lead: str, shap_top: pd.DataFrame, scenario: pd.DataFrame) -> s
 
 def format_prob(prob: float) -> str:
     return f"{prob * 100:.1f}%"
+
+
+def render_image_card(image_path: Path, title: str, caption: str | None = None, max_height: int = 520) -> None:
+    if not image_path.exists():
+        st.info(f"{title} 이미지가 없습니다.")
+        return
+    encoded = base64.b64encode(image_path.read_bytes()).decode("utf-8")
+    caption_html = f"<div class='small-caption'>{caption}</div>" if caption else ""
+    st.markdown(
+        f"""
+        <div class="viz-card">
+            <div class="viz-card-title">{title}</div>
+            <img src="data:image/png;base64,{encoded}" style="max-height:{max_height}px;" />
+            {caption_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def make_today_template(feature_df: pd.DataFrame, target_date: pd.Timestamp, sites: list[str]) -> pd.DataFrame:
@@ -801,41 +840,55 @@ with tab_performance:
         hide_index=True,
     )
 
-    col_left, col_right = st.columns([1, 1])
+    st.subheader(f"{perf_lead} 진단 그래프")
+    col_left, col_right = st.columns([0.42, 0.58], gap="large")
     with col_left:
-        st.subheader(f"{perf_lead} Confusion Matrix")
         cm_img = fig_dir / f"confusion_matrix_Tplus{LEAD_DAYS[perf_lead]}_best.png"
-        if cm_img.exists():
-            st.image(str(cm_img), caption=f"{perf_lead} Confusion Matrix", use_container_width=True)
-        else:
-            st.info("해당 리드타임의 Confusion Matrix 이미지가 없습니다.")
+        render_image_card(
+            cm_img,
+            f"{perf_lead} Confusion Matrix",
+            "실제 발령/미발령과 모델 예측 결과의 교차표입니다.",
+            max_height=330,
+        )
 
     with col_right:
-        st.subheader(f"{perf_lead} SHAP Top Feature")
         perf_shap = shap_top_features[shap_top_features["lead_time"] == perf_lead].head(12)
-        if perf_shap.empty:
-            st.info("해당 리드타임의 SHAP 결과가 없습니다.")
-        else:
-            fig = px.bar(
-                perf_shap.sort_values("mean_abs_shap"),
-                x="mean_abs_shap",
-                y="feature",
-                orientation="h",
-                color="mean_abs_shap",
-                color_continuous_scale="Blues",
-                labels={"mean_abs_shap": "평균 |SHAP|", "feature": "변수"},
-            )
-            fig.update_layout(height=390, margin=dict(l=20, r=20, t=20, b=20))
-            st.plotly_chart(fig, use_container_width=True)
+        with st.container(border=True):
+            st.markdown(f"<div class='viz-card-title'>{perf_lead} SHAP Top Feature</div>", unsafe_allow_html=True)
+            if perf_shap.empty:
+                st.info("해당 리드타임의 SHAP 결과가 없습니다.")
+            else:
+                fig = px.bar(
+                    perf_shap.sort_values("mean_abs_shap"),
+                    x="mean_abs_shap",
+                    y="feature",
+                    orientation="h",
+                    color="mean_abs_shap",
+                    color_continuous_scale="Blues",
+                    labels={"mean_abs_shap": "평균 |SHAP|", "feature": "변수"},
+                )
+                fig.update_layout(
+                    height=360,
+                    margin=dict(l=10, r=10, t=10, b=10),
+                    coloraxis_showscale=False,
+                    yaxis_title=None,
+                    xaxis_title="평균 |SHAP|",
+                )
+                st.plotly_chart(fig, use_container_width=True)
 
-    st.subheader(f"{perf_lead} SHAP Summary")
     shap_img = fig_dir / f"shap_summary_Tplus{LEAD_DAYS[perf_lead]}.png"
-    if shap_img.exists():
-        st.image(str(shap_img), caption=f"{perf_lead} SHAP summary plot", use_container_width=True)
-    else:
-        st.info("해당 리드타임의 SHAP summary 이미지가 없습니다.")
+    render_image_card(
+        shap_img,
+        f"{perf_lead} SHAP Summary",
+        "점의 색은 변수값 크기, x축 위치는 예측 위험을 높이거나 낮춘 방향과 크기를 의미합니다.",
+        max_height=620,
+    )
 
     with st.expander("전체 리드타임 ROC/PR Curve 보기"):
         curve_img = fig_dir / "roc_pr_curve_best_models.png"
-        if curve_img.exists():
-            st.image(str(curve_img), caption="ROC/PR Curve - Best Models", use_container_width=True)
+        render_image_card(
+            curve_img,
+            "ROC/PR Curve - Best Models",
+            "전체 리드타임 best model의 ROC와 Precision-Recall 곡선입니다.",
+            max_height=560,
+        )
