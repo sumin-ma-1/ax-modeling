@@ -820,6 +820,17 @@ with tab_performance:
 """
             )
 
+        if MODEL_CONFIGS[model_mode]["key"] == "monitoring":
+            st.info(
+                "**보조 모델 추가 입력 피처** — 조류 모니터링 값이 확보된 시점부터 아래 피처를 환경·수문 피처에 추가하여 사용합니다.\n\n"
+                "| 구분 | 피처명 |\n"
+                "|------|--------|\n"
+                "| 로그 변환값 | `log_cyano` |\n"
+                "| Lag 피처 | `log_cyano_lag1`, `log_cyano_lag3`, `log_cyano_lag7`, `log_cyano_lag10`, `log_cyano_lag14`, `log_cyano_lag30` |\n"
+                "| Rolling 피처 | `log_cyano_roll7`, `log_cyano_roll14`, `log_cyano_roll30`, `log_cyano_roll7_max` |\n"
+                "| 타 지점 Lag | `hoenam_log_cyano_lag7`, `hoenam_log_cyano_lag10`, `hoenam_log_cyano_lag14` |"
+            )
+
         st.divider()
         st.markdown("**③ 인과추론 기법 적용: Mann-Whitney U 검정**")
         st.markdown(
